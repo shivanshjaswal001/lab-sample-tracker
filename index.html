@@ -1,88 +1,194 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Lab Sample Tracker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LabTrack | Sample Tracking System</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
-    <h1>Lab Sample Tracker</h1>
-    <p>Team Sankalp</p>
-</header>
+  <header class="navbar">
+    <div class="container nav-content">
+      <a href="#" class="logo">✚ Lab<span>Track</span></a>
+      <nav>
+        <a href="#home">Home</a>
+        <a href="#staff">Lab Staff</a>
+        <a href="#tracking">Track Sample</a>
+      </nav>
+    </div>
+  </header>
 
-<nav>
-    <a href="#register">Register</a>
-    <a href="#samples">Samples</a>
-    <a href="#reports">Reports</a>
-</nav>
+  <main>
+    <section id="home" class="hero container">
+      <div class="hero-content">
+        <span class="eyebrow">LAB SAMPLE MANAGEMENT</span>
+        <h1>Simple, reliable<br><span>sample tracking.</span></h1>
+        <p>Register laboratory samples, monitor their progress
+          and check verified test results in one place.</p>
+        <div class="hero-actions">
+          <a href="#staff" class="btn">Manage Samples</a>
+          <a href="#tracking" class="text-link">Track a Sample →</a>
+        </div>
+      </div>
 
-<section id="register">
-    <h2>Patient Registration</h2>
-    <form id="patientForm">
-        <input id="name" placeholder="Patient Name" required>
-        <input id="age" type="number" min="1" max="120" placeholder="Age" required>
-        <select id="test" required>
-            <option value="">Select Test</option>
-            <option>Blood Test</option>
-            <option>Urine Test</option>
-            <option>Thyroid Test</option>
-        </select>
-        <button>Register</button>
-    </form>
-</section>
+      <div class="hero-card">
+        <div class="card-top">
+          <span>Sample Overview</span>
+          <span class="live-dot">● System Ready</span>
+        </div>
+        <div class="stat">
+          <span>Total Samples</span>
+          <strong id="totalCount">0</strong>
+        </div>
+        <div class="stat">
+          <span>In Testing</span>
+          <strong id="testingCount">0</strong>
+        </div>
+        <div class="stat">
+          <span>Completed</span>
+          <strong id="completedCount">0</strong>
+        </div>
+      </div>
+    </section>
 
-<section id="samples">
-    <h2>Sample Tracking</h2>
-    <table>
-        <tr>
-            <th>ID</th><th>Patient</th><th>Test</th>
-            <th>Technician</th><th>Status</th>
-        </tr>
-        <tbody id="sampleTable"></tbody>
-    </table>
+    <section id="staff" class="section section-alt">
+      <div class="container">
+        <div class="section-heading">
+          <span class="eyebrow">LAB STAFF</span>
+          <h2>Manage laboratory samples</h2>
+          <p>Register patients and update sample information.</p>
+        </div>
 
-    <h3>Update Sample</h3>
-    <form id="updateForm">
-        <input id="sampleId" type="number" placeholder="Sample ID" required>
-        <select id="technician" required>
-            <option value="">Select Technician</option>
-            <option>Technician A</option>
-            <option>Technician B</option>
-        </select>
-        <select id="status" required>
-            <option value="">Select Status</option>
-            <option>Collected</option>
-            <option>Testing</option>
-            <option>Completed</option>
-        </select>
-        <button>Update</button>
-    </form>
-</section>
+        <div class="panel">
+          <h3>Register Patient</h3>
+          <form id="patientForm" class="form-grid">
+            <div class="field">
+              <label for="patientName">Patient Name</label>
+              <input id="patientName" type="text"
+                placeholder="Enter full name" required maxlength="80">
+            </div>
 
-<section id="reports">
-    <h2>Test Reports</h2>
-    <form id="reportForm">
-        <input id="reportId" type="number" placeholder="Sample ID" required>
-        <input id="result" placeholder="Test Result" required>
-        <label>
-            <input type="checkbox" id="verified"> Verified
-        </label>
-        <button>Save Report</button>
-    </form>
+            <div class="field">
+              <label for="patientAge">Age</label>
+              <input id="patientAge" type="number"
+                placeholder="Enter age" min="1" max="120" required>
+            </div>
 
-    <table>
-        <tr>
-            <th>ID</th><th>Result</th><th>Verification</th><th>Report Status</th>
-        </tr>
-        <tbody id="reportTable"></tbody>
-    </table>
-</section>
+            <div class="field">
+              <label for="testType">Test Type</label>
+              <select id="testType" required>
+                <option value="">Select a test</option>
+                <option>Blood Test</option>
+                <option>Urine Test</option>
+                <option>Thyroid Test</option>
+                <option>Blood Sugar Test</option>
+                <option>Lipid Profile</option>
+              </select>
+            </div>
 
-<footer>Lab Sample Tracker | Team Sankalp</footer>
+            <div class="form-action">
+              <button class="btn" type="submit">Register Patient</button>
+            </div>
+          </form>
+          <p id="registerMessage" class="message" aria-live="polite"></p>
+        </div>
 
-<script src="script.js"></script>
+        <div class="panel">
+          <div class="panel-heading">
+            <h3>Sample Records</h3>
+            <input id="searchInput" class="search"
+              type="search" placeholder="Search samples...">
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Sample ID</th>
+                  <th>Patient</th>
+                  <th>Test</th>
+                  <th>Technician</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="sampleTable"></tbody>
+            </table>
+          </div>
+          <p id="emptyMessage" class="empty">No samples registered yet.</p>
+        </div>
+
+        <div id="editPanel" class="panel hidden">
+          <h3>Update Sample <span id="editingId"></span></h3>
+          <form id="updateForm" class="form-grid">
+            <div class="field">
+              <label for="technician">Technician Name</label>
+              <input id="technician" type="text"
+                placeholder="Assigned technician" maxlength="80">
+            </div>
+
+            <div class="field">
+              <label for="sampleStatus">Sample Status</label>
+              <select id="sampleStatus">
+                <option>Collected</option>
+                <option>Testing</option>
+                <option>Completed</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="result">Test Result</label>
+              <select id="result">
+                <option value="">Not Entered</option>
+                <option>Normal</option>
+                <option>Abnormal</option>
+              </select>
+            </div>
+
+            <div class="field checkbox-field">
+              <label>
+                <input type="checkbox" id="verified">
+                Report Verified
+              </label>
+            </div>
+
+            <div class="form-action">
+              <button class="btn" type="submit">Save Changes</button>
+            </div>
+          </form>
+          <p id="updateMessage" class="message" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="tracking" class="section">
+      <div class="container tracking-container">
+        <div class="section-heading centered">
+          <span class="eyebrow">PATIENT TRACKING</span>
+          <h2>Track your sample</h2>
+          <p>Enter your sample ID to check its progress and report.</p>
+        </div>
+
+        <form id="trackForm" class="track-form">
+          <input id="trackId" type="text"
+            placeholder="Enter Sample ID (e.g. LAB-101)" required>
+          <button class="btn" type="submit">Track Sample</button>
+        </form>
+
+        <div id="trackResult" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-content">
+      <span>✚ LabTrack</span>
+      <span>Team Sankalp · CSE326 · Academic Demo</span>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
