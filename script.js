@@ -1,220 +1,171 @@
 
-const STORAGE_KEY = "labtrack_samples_v2";
+const $ = id => document.getElementById(id);
+const KEY = "labtrack_simple_v1";
+let samples = JSON.parse(localStorage.getItem(KEY) || "[]");
+let editing = null;
 
-let samples = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-let selectedId = null;
-
-const $ = (id) => document.getElementById(id);
-
-function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(samples));
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(samples));
 }
 
-function makeId() {
-  let next = Number(localStorage.getItem("labtrack_next_id") || "101");
-  const used = new Set(samples.map(s => s.id));
-
-  while (used.has("LAB-" + next)) {
-    next++;
-  }
-
-  localStorage.setItem("labtrack_next_id", String(next + 1));
-  return "LAB-" + next;
+function openPage(role) {
+  ["home", "doctor", "patient"].forEach(id =>
+    $(id).classList.toggle("hidden", id !== role)
+  );
+  $("backBtn").classList.toggle("hidden", role === "home");
+  window.scrollTo(0, 0);
 }
 
-function showText(id, message) {
-  $(id).textContent = message;
-}
-
-function makeBadge(status) {
-  const span = document.createElement("span");
-  span.className = "badge " + status.toLowerCase();
-  span.textContent = status;
-  return span;
+function goHome() {
+  openPage("home");
 }
 
 function render() {
-  const table = $("sampleTable");
-  table.innerHTML = "";
+  $("records").innerHTML = "";
+  $("noRecords").classList.toggle("hidden", samples.length > 0);
 
-  const search = $("searchInput").value.toLowerCase().trim();
-
-  const filtered = samples.filter(s =>
-    s.id.toLowerCase().includes(search) ||
-    s.name.toLowerCase().includes(search) ||
-    s.test.toLowerCase().includes(search)
-  );
-
-  filtered.forEach(s => {
+  samples.forEach(s => {
     const row = document.createElement("tr");
 
-    [s.id, s.name, s.test, s.technician || "Not assigned"]
-      .forEach(value => {
-        const td = document.createElement("td");
-        td.textContent = value;
-        row.appendChild(td);
-      });
+    [s.id, s.name, s.test].forEach(value => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.appendChild(cell);
+    });
 
     const statusCell = document.createElement("td");
-    statusCell.appendChild(makeBadge(s.status));
+    const badge = document.createElement("span");
+    badge.className = "badge " + s.status;
+    badge.textContent = s.status;
+    statusCell.appendChild(badge);
     row.appendChild(statusCell);
 
     const actionCell = document.createElement("td");
-    const button = document.createElement("button");
-    button.className = "small-btn";
-    button.textContent = "Edit";
-    button.addEventListener("click", () => editSample(s.id));
-    actionCell.appendChild(button);
+    const btn = document.createElement("button");
+    btn.className = "edit-btn";
+    btn.textContent = "Edit";
+    btn.onclick = () => editSample(s.id);
+    actionCell.appendChild(btn);
     row.appendChild(actionCell);
 
-    table.appendChild(row);
+    $("records").appendChild(row);
   });
 
-  $("emptyMessage").style.display = filtered.length ? "none" : "block";
-
-  $("totalCount").textContent = samples.length;
-  $("testingCount").textContent =
+  $("total").textContent = samples.length;
+  $("testing").textContent =
     samples.filter(s => s.status === "Testing").length;
-  $("completedCount").textContent =
+  $("completed").textContent =
     samples.filter(s => s.status === "Completed").length;
 }
 
-$("patientForm").addEventListener("submit", function(event) {
-  event.preventDefault();
+$("registerForm").onsubmit = function(e) {
+  e.preventDefault();
 
-  const name = $("patientName").value.trim();
-  const age = Number($("patientAge").value);
-  const test = $("testType").value;
+  const name = $("name").value.trim();
+  const age = Number($("age").value);
+  const test = $("test").value;
 
-  if (!name || !Number.isInteger(age) || age < 1 || age > 120 || !test) {
-    showText("registerMessage", "Please enter valid patient details.");
-    return;
-  }
+  if (!name || age < 1 || age > 120 || !test) return;
 
-  const sample = {
-    id: makeId(),
-    name,
-    age,
-    test,
+  let next = Number(localStorage.getItem("labtrack_next") || "101");
+  while (samples.some(s => s.id === "LAB-" + next)) next++;
+  localStorage.setItem("labtrack_next", next + 1);
+
+  const id = "LAB-" + next;
+
+  samples.push({
+    id, name, age, test,
     technician: "",
     status: "Collected",
     result: "",
     verified: false
-  };
+  });
 
-  samples.push(sample);
-  saveData();
+  save();
   render();
-
   this.reset();
-  showText("registerMessage",
-    "Patient registered! Sample ID: " + sample.id);
-});
+  $("registerMsg").textContent = "Registered successfully! Sample ID: " + id;
+};
 
 function editSample(id) {
-  const sample = samples.find(s => s.id === id);
-  if (!sample) return;
+  const s = samples.find(item => item.id === id);
+  if (!s) return;
 
-  selectedId = id;
-  $("editingId").textContent = "— " + id;
-  $("technician").value = sample.technician;
-  $("sampleStatus").value = sample.status;
-  $("result").value = sample.result;
-  $("verified").checked = sample.verified;
+  editing = id;
+  $("editId").textContent = id;
+  $("technician").value = s.technician;
+  $("status").value = s.status;
+  $("result").value = s.result;
+  $("verified").checked = s.verified;
+  $("updateMsg").textContent = "";
 
-  $("editPanel").classList.remove("hidden");
-  showText("updateMessage", "");
-  $("editPanel").scrollIntoView({ behavior: "smooth", block: "center" });
+  $("editBox").classList.remove("hidden");
+  $("editBox").scrollIntoView({ behavior: "smooth" });
 }
 
-$("updateForm").addEventListener("submit", function(event) {
-  event.preventDefault();
+$("updateForm").onsubmit = function(e) {
+  e.preventDefault();
 
-  const sample = samples.find(s => s.id === selectedId);
-  if (!sample) return;
+  const s = samples.find(item => item.id === editing);
+  if (!s) return;
 
-  const status = $("sampleStatus").value;
+  const status = $("status").value;
   const result = $("result").value;
   const verified = $("verified").checked;
 
   if (result && status !== "Completed") {
-    showText("updateMessage",
-      "Complete the sample before entering a result.");
+    $("updateMsg").textContent = "Complete the sample before adding results.";
     return;
   }
 
-  if (verified && (!result || status !== "Completed")) {
-    showText("updateMessage",
-      "A completed sample with a result is required for verification.");
+  if (verified && !result) {
+    $("updateMsg").textContent = "Enter a result before verification.";
     return;
   }
 
-  sample.technician = $("technician").value.trim();
-  sample.status = status;
-  sample.result = result;
-  sample.verified = verified;
+  s.technician = $("technician").value.trim();
+  s.status = status;
+  s.result = result;
+  s.verified = verified;
 
-  saveData();
+  save();
   render();
-  showText("updateMessage", "Sample updated successfully.");
-});
+  $("updateMsg").textContent = "Sample updated successfully!";
+};
 
-$("searchInput").addEventListener("input", render);
+$("trackForm").onsubmit = function(e) {
+  e.preventDefault();
 
-$("trackForm").addEventListener("submit", function(event) {
-  event.preventDefault();
-
-  const id = $("trackId").value.trim().toUpperCase();
-  const sample = samples.find(s => s.id === id);
-  const output = $("trackResult");
+  const id = $("searchId").value.trim().toUpperCase();
+  const s = samples.find(item => item.id === id);
+  const output = $("trackOutput");
   output.innerHTML = "";
 
-  if (!sample) {
-    const message = document.createElement("p");
-    message.className = "error";
-    message.textContent = "Sample not found. Please check your Sample ID.";
-    output.appendChild(message);
+  if (!s) {
+    output.textContent = "Sample not found. Check your Sample ID.";
     return;
   }
 
-  const card = document.createElement("div");
-  card.className = "result-card";
+  const report = document.createElement("div");
+  report.className = "report";
 
-  const title = document.createElement("h3");
-  title.textContent = "Sample " + sample.id;
-  card.appendChild(title);
-
-  function addRow(label, value) {
-    const row = document.createElement("div");
-    row.className = "result-row";
-
-    const left = document.createElement("span");
-    left.textContent = label;
-
-    const right = document.createElement("strong");
-    right.textContent = value;
-
-    row.append(left, right);
-    card.appendChild(row);
+  function addLine(label, value) {
+    const p = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = label + ": ";
+    p.append(strong, document.createTextNode(value));
+    report.appendChild(p);
   }
 
-  addRow("Test Type", sample.test);
-  addRow("Sample Status", sample.status);
+  addLine("Sample ID", s.id);
+  addLine("Test", s.test);
+  addLine("Status", s.status);
 
-  const reportReady =
-    sample.status === "Completed" &&
-    sample.verified &&
-    Boolean(sample.result);
+  const ready = s.status === "Completed" && s.verified && s.result;
+  addLine("Report", ready ? "Verified" : "Pending");
+  if (ready) addLine("Result", s.result);
 
-  addRow("Report Status", reportReady ? "Ready" : "Pending");
-
-  if (reportReady) {
-    addRow("Verified Result", sample.result);
-  } else {
-    addRow("Result", "Available after verification");
-  }
-
-  output.appendChild(card);
-});
+  output.appendChild(report);
+};
 
 render();
